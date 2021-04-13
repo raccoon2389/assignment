@@ -16,13 +16,14 @@ class Model(torch.nn.Module):
         x = x @ self.grad['W2']
         x = F.relu(x)
         
-        x = torch.sum(torch.square(x),dim=1)
-        return x
+        x = torch.sum(torch.square(x))
+        return x.view(1)
     
 grad = {}
 grad['W1'] = torch.FloatTensor(np.random.rand(2,2))
 grad['W2'] = torch.DoubleTensor(np.random.rand(2,1))
-dout = torch.FloatTensor(np.random.rand(2))
+dout = torch.FloatTensor(np.random.rand(1))
+
 
 model = Model(grad)
 x = torch.FloatTensor(np.random.rand(2,2))
