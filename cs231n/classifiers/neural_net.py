@@ -81,9 +81,9 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        h1 = np.maximum(0, X.dot(W1) + b1) 
+        h1 = np.maximum(0, X@W1 + b1) 
 
-        scores = np.dot (h1, W2) + b2
+        scores = h1@W2 + b2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -101,12 +101,13 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         delta = 1e-8
-        scores -=np.max(scores,axis=1).reshape(N,1)
-        ans = np.exp(scores[np.arange(N),y])
-        add_score = np.sum(np.exp(scores),axis=1)
-        loss = np.sum(-np.log(ans/(add_score+delta)+delta))
-        loss /= N+delta
-        loss += reg*(np.sum(W1**2)+np.sum(W2**2))
+
+        exp_sc = np.exp(scores)
+        ce = exp_sc / np.sum(exp_sc,axis=1,keepdims=True)
+        loss = -1* np.sum(np.log(ce[range(N),y]))/N
+                 
+        loss += 0.5*reg*(np.sum(np.square(W1)) + np.sum(np.square(W1)))
+                 
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -119,24 +120,18 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        bak = np.exp(scores)/add_score.reshape(N,1)
-        li =[x for x in range(N)]
-        bak[li,y] = -1*(np.sum(np.exp(scores))-ans)/(np.sum(np.exp(scores)))
-        bak /= N
+        ce[range(N),y] -= 1
+        ce /= N
+                 
+        grads['W2'] = h1.T@ce + reg *W2
+        grads['b2'] = np.sum(ce,axis = 0)
+ 
+                
 
-        z = X.dot(W1) + b1
+        dz1 = ce@W2.T*(h1>0)
+        grads['W1'] = X@dz1 + reg *W1
+        grads['b1'] = np.sum(dz1,axis = 0)
 
-        dw2 = np.dot(h1.T,bak)
-        db2 = np.sum(bak, axis=0)
-        grads['W2'] = dw2/N + 2 * reg * W2
-        grads['b2'] = db2/N
-
-        dz1 = bak.dot(W2.T)*(z>0)
-        
-        dw1 = np.dot(X.T,dz1)
-        db2 = np.sum(dz1, axis=0) 
-        grads['W1'] = dw1/N + 2 * reg * W1
-        grads['b1'] = db2/N
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -202,8 +197,9 @@ class TwoLayerNet(object):
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             a = ['W1','W2','b1','b2']
             for i in a:
-                  self.params[i] -= learning_rate * grads[i]
+              self.params[i] -= learning_rate * grads[i]
 
+       
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             if verbose and it % 100 == 0:
