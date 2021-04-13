@@ -33,7 +33,28 @@ def softmax_loss_naive(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    for i in range(X.shape[0]):
+      score = X[i].dot(W)
+      score -= np.max(score)  
+      # print(score)
+        
+      exp_sum = np.sum(np.exp(score))
+
+      loss -= np.log(exp_sum / score[y[i]])
+
+
+      for d in range(W.shape[1]):
+        # print(d.shape)
+        if d != y[i]:
+          dW[:, d] += np.exp(score[d]) / exp_sum * X[i]
+        else:
+          dW[:, d] += np.exp(score[d]) / exp_sum * X[i] - X[i]
+                
+    loss /= X.shape[0]
+    loss += reg * np.sum(W * W)
+
+    dW /= X.shape[0]
+    dW += 2*reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -58,7 +79,28 @@ def softmax_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    num_train = X.shape[0]
+
+    score = X.dot(W)
+    # Axis = 1 the maximum value of each line, score remains 500 * 10
+    score -= np.max(score,axis=1)[:,np.newaxis]
+    # Correct_score becomes 500 * 1
+    correct_score = score[range(num_train), y]
+    exp_score = np.exp(score)
+    # Sum_exp_score dimensions of 500 * 1
+    sum_exp_score = np.sum(exp_score,axis=1)
+    # Calculate loss
+    loss = np.sum(np.log(sum_exp_score) - correct_score)
+    loss /= num_train
+    loss += 0.5 * reg * np.sum(W * W)
+
+    # Compute the gradient
+    margin = np.exp(score) / sum_exp_score.reshape(num_train,1)
+    margin[np.arange(num_train), y] += -1
+    dW = X.T.dot(margin)
+    dW /= num_train
+    dW += reg * W
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 

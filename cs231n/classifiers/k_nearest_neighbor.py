@@ -102,7 +102,7 @@ class KNearestNeighbor(object):
             #######################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            dists[i,:] = np.sqrt(np.sum(self.X_train - X[i,:]**2, axis = 1))
+            dists[i,:] = np.sqrt(np.sum((X[i,:] - self.X_train)**2, axis = 1))
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -167,8 +167,8 @@ class KNearestNeighbor(object):
             # Hint: Look up the function numpy.argsort.                             #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            closest_y = self.y_train[np.argsort(dists[i])[:k]]
+            sorted = np.argsort(dists[i])[:k]
+            closest_y = self.y_train[sorted]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             #########################################################################
@@ -179,8 +179,8 @@ class KNearestNeighbor(object):
             # label.                                                                #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            y_pred[i] = np.argmax(np.bincount(closest_y))
+            freq = np.bincount(closest_y)
+            y_pred[i] = np.argmax(freq)
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 

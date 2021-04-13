@@ -69,6 +69,7 @@ class TwoLayerNet(object):
         # Unpack variables from the params dictionary
         W1, b1 = self.params['W1'], self.params['b1']
         W2, b2 = self.params['W2'], self.params['b2']
+        # print(X.shape)
         N, D = X.shape
 
         # Compute the forward pass
@@ -80,7 +81,9 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        h1 = np.maximum(0, X.dot(W1) + b1) 
+
+        scores = np.dot (h1, W2) + b2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -97,8 +100,13 @@ class TwoLayerNet(object):
         # classifier loss.                                                          #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
+        delta = 1e-8
+        scores -=np.max(scores,axis=1).reshape(N,1)
+        ans = np.exp(scores[np.arange(N),y])
+        add_score = np.sum(np.exp(scores),axis=1)
+        loss = np.sum(-np.log(ans/(add_score+delta)+delta))
+        loss /= N+delta
+        loss += reg*(np.sum(W1**2)+np.sum(W2**2))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -111,7 +119,24 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        bak = np.exp(scores)/add_score.reshape(N,1)
+        li =[x for x in range(N)]
+        bak[li,y] = -1*(np.sum(np.exp(scores))-ans)/(np.sum(np.exp(scores)))
+        bak /= N
+
+        z = X.dot(W1) + b1
+
+        dw2 = np.dot(h1.T,bak)
+        db2 = np.sum(bak, axis=0)
+        grads['W2'] = dw2/N + 2 * reg * W2
+        grads['b2'] = db2/N
+
+        dz1 = bak.dot(W2.T)*(z>0)
+        
+        dw1 = np.dot(X.T,dz1)
+        db2 = np.sum(dz1, axis=0) 
+        grads['W1'] = dw1/N + 2 * reg * W1
+        grads['b1'] = db2/N
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -156,11 +181,15 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            batch_idx = np.random.choice(num_train,batch_size,replace=True)
+
+            X_batch = X[batch_idx]
+            y_batch = y[batch_idx]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             # Compute loss and gradients using the current minibatch
+
             loss, grads = self.loss(X_batch, y=y_batch, reg=reg)
             loss_history.append(loss)
 
@@ -171,8 +200,9 @@ class TwoLayerNet(object):
             # stored in the grads dictionary defined above.                         #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            pass
+            a = ['W1','W2','b1','b2']
+            for i in a:
+                  self.params[i] -= learning_rate * grads[i]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -217,8 +247,8 @@ class TwoLayerNet(object):
         # TODO: Implement this function; it should be VERY simple!                #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
+ 
+        y_pred = np.argmax(self.loss(X), axis=1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
